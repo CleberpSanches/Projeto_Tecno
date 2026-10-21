@@ -1,15 +1,17 @@
-"use client"
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-const Router = () => {
+import Inicio from "./pages/Inicio";
+import LoginCadastro from "./pages/LoginCadastro";
+import Perfil from "./pages/Perfil";
+
+export default function Router() {
     return (
         <BrowserRouter>
             <Routes>
-                {/*<Route path='/login' element={<Login />} />*/}
+                <Route path="/" element={<Inicio />} />
+                <Route path="/perfil" element={<Perfil />} />
             </Routes>
         </BrowserRouter>
-    )
+    );
 }
-
-export default Router
