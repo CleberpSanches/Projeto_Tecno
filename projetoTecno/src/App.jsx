@@ -1,12 +1,6 @@
-import React from 'react'
-import Navbar from './layout/Navbar'
 
-const App = () => {
-  return (
-    <div className="min-h-screen flex items-start justify-center">
-        <Navbar/>
-    </div>
-  )
+import Router from "./Router";
+
+export default function App() {
+    return <Router />;
 }
-
-export default App
