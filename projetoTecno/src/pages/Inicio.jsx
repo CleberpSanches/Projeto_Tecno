@@ -29,7 +29,7 @@ export default function Inicio() {
 
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                     <article className="bg-[#111827] border border-gray-800 rounded-2xl p-6">
-                        <div className="text-3xl mb-4">🤝</div>
+
                         <h2 className="text-xl font-semibold mb-3">
                             Colaboração
                         </h2>
@@ -40,7 +40,7 @@ export default function Inicio() {
                     </article>
 
                     <article className="bg-[#111827] border border-gray-800 rounded-2xl p-6">
-                        <div className="text-3xl mb-4">📋</div>
+
                         <h2 className="text-xl font-semibold mb-3">
                             Organização
                         </h2>
@@ -51,7 +51,6 @@ export default function Inicio() {
                     </article>
 
                     <article className="bg-[#111827] border border-gray-800 rounded-2xl p-6">
-                        <div className="text-3xl mb-4">💡</div>
                         <h2 className="text-xl font-semibold mb-3">
                             Produtividade
                         </h2>

@@ -1,13 +1,17 @@
 
 import { NavLink } from "react-router-dom";
-
+import { GoArchive } from "react-icons/go";
+import { GrTasks } from "react-icons/gr";
+import { FaCalendarAlt } from "react-icons/fa";
+import { CgProfile } from "react-icons/cg";
+import { GoHomeFill } from "react-icons/go";
 export default function Sidebar() {
     const links = [
-        { nome: "Início", caminho: "/", icone: "⌂" },
-        { nome: "Projetos", caminho: "/projetos", icone: "▣" },
-        { nome: "Tarefas", caminho: "/tarefas", icone: "☑" },
-        { nome: "Calendário", caminho: "/calendario", icone: "▦" },
-        { nome: "Perfil", caminho: "/perfil", icone: "◉" },
+        { nome: "Início", caminho: "/", icone: <GoHomeFill /> },
+        { nome: "Projetos", caminho: "/projetos", icone: <GoArchive /> },
+        { nome: "Tarefas", caminho: "/tarefas", icone: <GrTasks /> },
+        { nome: "Calendário", caminho: "/calendario", icone: <FaCalendarAlt />},
+        { nome: "Perfil", caminho: "/perfil", icone: <CgProfile /> },
     ];
 
     return (
