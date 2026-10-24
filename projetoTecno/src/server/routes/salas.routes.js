@@ -1,17 +1,20 @@
 import { Router } from "express";
+import { autenticarUsuario } from "../middlewares/auth.middleware.js";
 import {
-    listarSalas, criarSala, entrarNaSala, listarMembrosSala,
-    convidarMembroSala, listarConvitesRecebidos, aceitarConviteSala, atualizarPapelMembroSala, removerMembroSala,
+    listarSalas, criarSala, detalheSala, entrarNaSala, listarMembrosSala,
+    atualizarPapelMembroSala, removerMembroSala, excluirSala,
 } from "../controllers/salas.controller.js";
 
 const router = Router();
+router.use(autenticarUsuario);
+
 router.get("/", listarSalas);
 router.post("/", criarSala);
 router.post("/entrar", entrarNaSala);
-router.get("/convites/recebidos", listarConvitesRecebidos);
-router.post("/convites/:token/aceitar", aceitarConviteSala);
+router.get("/:id", detalheSala);
 router.get("/:id/membros", listarMembrosSala);
-router.post("/:id/convites", convidarMembroSala);
 router.patch("/:id/membros/:usuarioId/papel", atualizarPapelMembroSala);
 router.delete("/:id/membros/:usuarioId", removerMembroSala);
+router.delete("/:id", excluirSala);
+
 export default router;
