@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { usuarios } from "../services/dados.js";
 
 export function autenticarUsuario(req, res, next) {
     const autorizacao = req.headers.authorization;
@@ -22,6 +23,11 @@ export function autenticarUsuario(req, res, next) {
             token,
             process.env.JWT_SECRET || "segredo-temporario-tecnoplan"
         );
+
+        const usuarioAtivo = usuarios.find((item) => item.id === Number(usuario.id));
+        if (!usuarioAtivo) {
+            return res.status(401).json({ erro: "A conta associada a este token não está mais ativa." });
+        }
 
         req.usuario = {
             id: usuario.id,
