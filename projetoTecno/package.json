@@ -1,16 +1,25 @@
 {
-  "name": "sitepessoal",
+  "name": "projetotecno",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "nodemon src/server/app.js",
+    "start:server": "node src/server/app.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:server": "node --test src/server/test/api.test.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.115.0",
     "@tailwindcss/vite": "^4.1.18",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -27,6 +36,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "nodemon": "^3.1.14",
     "vite": "^7.2.4"
   }
 }
