@@ -1,4 +1,4 @@
-import { supabase, ApiError, traduzirErroBanco } from "../database.js";
+import { supabase, ApiError, traduzirErroBanco } from "../supabase.js";
 
 export const PAPEIS_VALIDOS = ["administrador", "membro", "observador"];
 

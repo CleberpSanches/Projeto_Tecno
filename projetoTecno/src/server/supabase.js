@@ -37,8 +37,7 @@ function lerConfig() {
         // ela contorna as políticas RLS (uso exclusivo do backend).
         // Sem ela, o servidor opera com a anon key e as tabelas exigem as
         // políticas de dev em supabase/rls.sql.
-        serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? null,
-        apiUrl: null,
+        serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? null,        apiUrl: null,
     };
 }
 
@@ -47,7 +46,8 @@ const config = lerConfig();
 const CHAVE_ATIVA = config.serviceKey ?? config.anonKey;
 
 /**
- * Cliente do banco. No servidor usa SUPABASE_SERVICE_ROLE_KEY (se configurada)
+ * cleanClient vindo do @supabase/supabase-js. No servidor usa
+ * SUPABASE_SERVICE_ROLE_KEY (se configurada, contorna as políticas RLS)
  * ou SUPABASE_ANON_KEY. No navegador fica null quando não há credenciais
  * VITE_ — o frontend conversa com a API via requestAPI, não direto pelo banco.
  */

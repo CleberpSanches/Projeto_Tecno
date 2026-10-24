@@ -5,8 +5,8 @@ import "dotenv/config";
 import authRoutes from "./routes/auth.routes.js";
 import salasRoutes from "./routes/salas.routes.js";
 import tarefasRoutes from "./routes/tarefas.routes.js";
-import { ApiError } from "./database.js";
-import "./database.js"; // valida SUPABASE_URL/SUPABASE_ANON_KEY no boot
+import { ApiError } from "./supabase.js";
+import "./supabase.js"; // valida as credenciais do Supabase no boot
 
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET é obrigatório em produção. Configure a variável de ambiente antes de iniciar a API.");

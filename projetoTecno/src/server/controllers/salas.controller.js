@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { supabase, ApiError, traduzirErroBanco } from "../database.js";
+import { supabase, ApiError, traduzirErroBanco } from "../supabase.js";
 import {
     PAPEIS_VALIDOS,
     obterPapelNaSala,

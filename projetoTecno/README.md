@@ -1,6 +1,6 @@
 # Projeto Tecno — Fullstack (React + Vite + API Node/Express + Supabase)
 
-Projeto unificado: **uma única pasta `src/`** contendo o frontend (`src/pages`, `src/api`, ...)
+Projeto unificado contendo o frontend (`src/pages`, `src/api`, ...) 
 e a API backend em `src/server`.
 
 ## Estrutura
@@ -11,9 +11,9 @@ src/
   components/     # Sidebar.jsx
   layout/         # Navbar.jsx
   pages/          # Inicio, LoginCadastro, Perfil, Projetos, Tarefas
+  services/       # supabase.js (cliente HTTP + sessão do frontend)
   server/         # API backend (Node + Express + Supabase)
-    database.js           # ARQUIVO UNIFICADO: cliente do banco + erros Postgres (servidor)
-                          # e helper HTTP/sessão (frontend) — todos importam daqui
+    database.js           # cliente supabase-js + tradução de erros do Postgres
     middlewares/          # auth.middleware.js (JWT + verificação no banco)
     controllers/          # auth, salas, tarefas
     routes/               # auth, salas, tarefas
@@ -63,7 +63,3 @@ npm run test:server # testes de integração (usam o Supabase configurado)
 
 Status: `pendente | em_andamento | concluida` · Prioridade: `baixa | media | alta`
 Papéis em sala: `administrador | membro | observador` (observador somente-leitura).
-
-Funcionalidades **descartadas** por não terem tabela no banco: quadros, listas,
-etiquetas, checklists, comentários, atividades, notificações, lembretes e
-convites por token (substituídos pelo código da sala).

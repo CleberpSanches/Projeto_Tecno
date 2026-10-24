@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { supabase, ApiError, traduzirErroBanco } from "../database.js";
+import { supabase, ApiError, traduzirErroBanco } from "../supabase.js";
 
 function gerarToken(usuario) {
     return jwt.sign(

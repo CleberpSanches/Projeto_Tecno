@@ -1,5 +1,5 @@
 // Membros de uma sala (listagem, papéis e remoção).
-import { requestAPI, lerSessao } from "../server/database.js";
+import { requestAPI, lerSessao } from "../server/supabase.js";
 
 export async function listarMembros(idSala) {
     const sessao = lerSessao();

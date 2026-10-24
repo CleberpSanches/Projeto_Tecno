@@ -1,5 +1,5 @@
 // Tarefas (cartões) e responsáveis.
-import { requestAPI, lerSessao } from "../server/database.js";
+import { requestAPI, lerSessao } from "../server/supabase.js";
 
 function tokenSessao() {
     return lerSessao()?.token;

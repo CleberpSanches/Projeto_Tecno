@@ -1,5 +1,5 @@
 // Autenticação: cadastro, login, perfil e exclusão de conta.
-import { requestAPI, salvarSessao, limparSessao } from "../server/database.js";
+import { requestAPI, salvarSessao, limparSessao } from "../server/supabase.js";
 
 export async function cadastrarUsuario({ nome, email, senha }) {
     const resposta = await requestAPI("/api/auth/cadastro", { metodo: "POST", corpo: { nome, email, senha } });

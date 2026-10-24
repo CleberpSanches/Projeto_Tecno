@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { supabase, ApiError } from "../database.js";
+import { supabase, ApiError } from "../supabase.js";
 
 export async function autenticarUsuario(req, res, next) {
     const autorizacao = req.headers.authorization;
