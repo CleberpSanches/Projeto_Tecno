@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { listarTarefas, concluirTarefa } from "../api/tarefas.js";
 
 
 function estaAtrasada(tarefa) {
@@ -66,7 +67,7 @@ export default function Tarefas() {
             setCarregando(true);
             setMensagem("");
 
-            const dados = await listarTarefasDoUsuario();
+            const dados = await listarTarefas();
             setTarefas(dados);
         } catch (error) {
             setMensagem(

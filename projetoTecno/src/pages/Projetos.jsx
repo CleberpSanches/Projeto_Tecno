@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-
+import { criarSala, entrarNaSala, listarSalas } from "../api/salas.js";
 export default function Projetos() {
     const navigate = useNavigate();
 
@@ -16,7 +16,7 @@ export default function Projetos() {
     async function carregarSalas() {
         try {
             setCarregando(true);
-            const dados = await listarSalasDoUsuario();
+            const dados = await listarSalas();
             setSalas(dados);
         } catch (error) {
             setMensagem(error.message || "Ocorreu um erro ao carregar as salas.");
@@ -29,49 +29,59 @@ export default function Projetos() {
         carregarSalas();
     }, []);
 
-    async function handleCriarSala() {
+
+
+    async function handleCriarSala(e) {
         e.preventDefault();
-        //se tiver vazia para a função
+
         if (!nomeSala.trim()) return;
 
-        try {
-            setProcessando(true);
-            setMensagem("");
+    try {
+        setProcessando(true);
+        setMensagem("");
 
-            const sala = await criarSala(nomeSala.trim);
-            //atuais é o paramatro do estado atual armazenado em sala e atualiza o estado para add a nova sala na lista
-            setSalas((atuais) => [...atuais, sala]);
-            setModal("");
-            setNomeSala("");
-            navigate(`/projetos/${sala.id}`);
-        } catch (error) {
-            setMensagem(error.message || "Ocorreu um erro ao criar a sala.");
-        } finally {
-            setProcessando(false);
-        }
+        const sala = await criarSala(nomeSala.trim());
+
+        setSalas((atuais) => [...atuais, sala]);
+        setModal("");
+        setNomeSala("");
+
+        navigate(`/projetos/${sala.id}`);
+    } catch (error) {
+        setMensagem(
+            error.message || "Ocorreu um erro ao criar a sala."
+        );
+    } finally {
+        setProcessando(false);
     }
+}
 
-    async function handleEntrarNaSala() {
+   async function handleEntrarNaSala(e) {
         e.preventDefault();
+
         if (!codigo.trim()) return;
 
-        try {
-            setProcessando(true);
-            setMensagem("");
+     try {
+        setProcessando(true);
+        setMensagem("");
 
-            const sala = await entrarNaSala(codigo);
-            setModal("");
-            setCodigo("");
-            navigate(`/projetos/${sala.id}`);
-        } catch (error) {
-            setMensagem(error.message || "Ocorreu um erro ao entrar na sala.");
-        } finally {
-            setProcessando(false);
-        }
+        const resultado = await entrarNaSala(codigo.trim());
+
+        setModal("");
+        setCodigo("");
+
+        navigate(`/projetos/${resultado.sala.id}`);
+    } catch (error) {
+        setMensagem(
+            error.message || "Ocorreu um erro ao entrar na sala."
+        );
+    } finally {
+        setProcessando(false);
     }
+}
 
     return (
-        <div className="min-h-sreen bg-[#0B0F1A] text-white">
+        <div className="min-h-screen bg-[#0B0F1A] text-white">
             <Sidebar />
 
             <main className="ml-64 min-h-screen p-8">

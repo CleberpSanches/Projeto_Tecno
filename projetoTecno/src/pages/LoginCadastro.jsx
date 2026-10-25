@@ -1,13 +1,58 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { cadastrarUsuario, loginUsuario } from "../api/cadlog.js";
 
 export default function LoginCadastro({ onClose }) {
     const [tela, setTela] = useState("login");
+    const [mensagem, setMensagem] = useState("");
+    const [processando, setProcessando] = useState(false);
 
-    function handleSubmit(e) {
+    const navigate = useNavigate();
+
+    async function handleSubmit(e) {
         e.preventDefault();
 
-        // conectar a api
+        setMensagem("");
+
+        const dados = Object.fromEntries(
+            new FormData(e.currentTarget).entries()
+        );
+
+        try {
+            setProcessando(true);
+
+            if (tela === "login") {
+                await loginUsuario({
+                    email: dados.email,
+                    senha: dados.senha
+                });
+            } else {
+                if (dados.senha !== dados.confirmarSenha) {
+                    setMensagem("As senhas não coincidem.");
+                    return;
+                }
+
+                await cadastrarUsuario({
+                    nome: dados.nome,
+                    email: dados.email,
+                    senha: dados.senha
+                });
+            }
+
+            if (onClose) {
+                onClose();
+            }
+
+            navigate("/projetos");
+
+        } catch (error) {
+            setMensagem(
+                error.message ||
+                "Não foi possível realizar a operação."
+            );
+        } finally {
+            setProcessando(false);
+        }
     }
 
     return (
@@ -27,7 +72,10 @@ export default function LoginCadastro({ onClose }) {
             <div className="flex bg-[#0B0F1A] rounded-xl p-1 mb-8 mr-6">
                 <button
                     type="button"
-                    onClick={() => setTela("login")}
+                    onClick={() => {
+                        setTela("login");
+                        setMensagem("");
+                    }}
                     className={`w-1/2 py-3 rounded-lg font-medium transition ${
                         tela === "login"
                             ? "bg-blue-600 text-white"
@@ -39,7 +87,10 @@ export default function LoginCadastro({ onClose }) {
 
                 <button
                     type="button"
-                    onClick={() => setTela("cadastro")}
+                    onClick={() => {
+                        setTela("cadastro");
+                        setMensagem("");
+                    }}
                     className={`w-1/2 py-3 rounded-lg font-medium transition ${
                         tela === "cadastro"
                             ? "bg-blue-600 text-white"
@@ -49,6 +100,13 @@ export default function LoginCadastro({ onClose }) {
                     Cadastro
                 </button>
             </div>
+
+            {/* Mensagem de erro */}
+            {mensagem && (
+                <p className="mb-4 text-sm text-red-400">
+                    {mensagem}
+                </p>
+            )}
 
             {tela === "login" ? (
                 <>
@@ -60,14 +118,22 @@ export default function LoginCadastro({ onClose }) {
                         Entre na sua conta para continuar.
                     </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-5"
+                    >
                         <div>
-                            <label htmlFor="login-email" className="block text-sm text-gray-300 mb-2">
+                            <label
+                                htmlFor="login-email"
+                                className="block text-sm text-gray-300 mb-2"
+                            >
                                 E-mail
                             </label>
+
                             <input
                                 id="login-email"
                                 type="email"
+                                name="email"
                                 autoComplete="email"
                                 placeholder="seu@email.com"
                                 required
@@ -76,12 +142,17 @@ export default function LoginCadastro({ onClose }) {
                         </div>
 
                         <div>
-                            <label htmlFor="login-senha" className="block text-sm text-gray-300 mb-2">
+                            <label
+                                htmlFor="login-senha"
+                                className="block text-sm text-gray-300 mb-2"
+                            >
                                 Senha
                             </label>
+
                             <input
                                 id="login-senha"
                                 type="password"
+                                name="senha"
                                 autoComplete="current-password"
                                 placeholder="Digite sua senha"
                                 required
@@ -91,17 +162,22 @@ export default function LoginCadastro({ onClose }) {
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold transition"
+                            disabled={processando}
+                            className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold transition disabled:opacity-50"
                         >
-                            Entrar
+                            {processando ? "Entrando..." : "Entrar"}
                         </button>
                     </form>
 
                     <p className="text-center text-sm text-gray-400 mt-6">
                         Ainda não tem conta?{" "}
+
                         <button
                             type="button"
-                            onClick={() => setTela("cadastro")}
+                            onClick={() => {
+                                setTela("cadastro");
+                                setMensagem("");
+                            }}
                             className="text-blue-400 hover:underline"
                         >
                             Cadastre-se
@@ -118,14 +194,22 @@ export default function LoginCadastro({ onClose }) {
                         Preencha os dados para começar.
                     </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-4"
+                    >
                         <div>
-                            <label htmlFor="cadastro-nome" className="block text-sm text-gray-300 mb-2">
+                            <label
+                                htmlFor="cadastro-nome"
+                                className="block text-sm text-gray-300 mb-2"
+                            >
                                 Nome completo
                             </label>
+
                             <input
                                 id="cadastro-nome"
                                 type="text"
+                                name="nome"
                                 autoComplete="name"
                                 placeholder="Seu nome"
                                 required
@@ -134,12 +218,17 @@ export default function LoginCadastro({ onClose }) {
                         </div>
 
                         <div>
-                            <label htmlFor="cadastro-email" className="block text-sm text-gray-300 mb-2">
+                            <label
+                                htmlFor="cadastro-email"
+                                className="block text-sm text-gray-300 mb-2"
+                            >
                                 E-mail
                             </label>
+
                             <input
                                 id="cadastro-email"
                                 type="email"
+                                name="email"
                                 autoComplete="email"
                                 placeholder="seu@email.com"
                                 required
@@ -148,12 +237,17 @@ export default function LoginCadastro({ onClose }) {
                         </div>
 
                         <div>
-                            <label htmlFor="cadastro-senha" className="block text-sm text-gray-300 mb-2">
+                            <label
+                                htmlFor="cadastro-senha"
+                                className="block text-sm text-gray-300 mb-2"
+                            >
                                 Senha (mínimo 8 caracteres)
                             </label>
+
                             <input
                                 id="cadastro-senha"
                                 type="password"
+                                name="senha"
                                 autoComplete="new-password"
                                 minLength={8}
                                 placeholder="Crie uma senha"
@@ -163,12 +257,17 @@ export default function LoginCadastro({ onClose }) {
                         </div>
 
                         <div>
-                            <label htmlFor="cadastro-confirmar" className="block text-sm text-gray-300 mb-2">
+                            <label
+                                htmlFor="cadastro-confirmar"
+                                className="block text-sm text-gray-300 mb-2"
+                            >
                                 Confirmar senha
                             </label>
+
                             <input
                                 id="cadastro-confirmar"
                                 type="password"
+                                name="confirmarSenha"
                                 autoComplete="new-password"
                                 minLength={8}
                                 placeholder="Repita sua senha"
@@ -179,17 +278,22 @@ export default function LoginCadastro({ onClose }) {
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold transition"
+                            disabled={processando}
+                            className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold transition disabled:opacity-50"
                         >
-                            Criar conta
+                            {processando ? "Aguarde..." : "Criar conta"}
                         </button>
                     </form>
 
                     <p className="text-center text-sm text-gray-400 mt-6">
                         Já tem uma conta?{" "}
+
                         <button
                             type="button"
-                            onClick={() => setTela("login")}
+                            onClick={() => {
+                                setTela("login");
+                                setMensagem("");
+                            }}
                             className="text-blue-400 hover:underline"
                         >
                             Fazer login
