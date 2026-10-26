@@ -1,30 +1,66 @@
-
 import { useCallback, useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { listarTarefas, concluirTarefa } from "../api/tarefas.js";
 
+function normalizarLista(resposta, chaves = []) {
+    if (Array.isArray(resposta)) return resposta;
 
-function estaAtrasada(tarefa) {
-    if (!tarefa.prazo || tarefa.status === "concluida") {
-        return false;
+    for (const chave of chaves) {
+        if (Array.isArray(resposta?.[chave])) return resposta[chave];
     }
 
-    return new Date(tarefa.prazo).getTime() < Date.now();
+    return [];
+}
+
+function lerPrazo(prazo) {
+    if (!prazo) return null;
+
+    const [ano, mes, dia] = String(prazo).slice(0, 10).split("-").map(Number);
+
+    if (!ano || !mes || !dia) return null;
+
+    return new Date(ano, mes - 1, dia);
+}
+
+function inicioDoDia(data = new Date()) {
+    return new Date(data.getFullYear(), data.getMonth(), data.getDate());
+}
+
+function estaAtrasada(tarefa) {
+    if (tarefa.status === "concluida") return false;
+
+    const prazo = lerPrazo(tarefa.prazo);
+    if (!prazo) return false;
+
+    // Só fica atrasada depois que o dia do prazo termina.
+    return prazo.getTime() < inicioDoDia().getTime();
 }
 
 function formatarPrazo(prazo) {
     if (!prazo) return "Sem prazo definido";
 
-    const data = new Date(prazo);
+    const data = lerPrazo(prazo);
+    if (!data) return "Prazo inválido";
 
-    if (Number.isNaN(data.getTime())) {
-        return "Prazo inválido";
-    }
+    return data.toLocaleDateString("pt-BR");
+}
 
-    return data.toLocaleString("pt-BR", {
-        dateStyle: "short",
-        timeStyle: "short",
-    });
+function obterIdSala(tarefa) {
+    return (
+        tarefa.id_sala ??
+        tarefa.sala_id ??
+        tarefa.sala?.id ??
+        tarefa.salas?.id ??
+        null
+    );
+}
+
+function obterNomeSala(tarefa) {
+    const nome = tarefa.sala?.nome ?? tarefa.salas?.nome ?? tarefa.nome_sala;
+    if (nome) return nome;
+
+    const idSala = obterIdSala(tarefa);
+    return idSala != null ? `Sala #${idSala}` : "Sem sala";
 }
 
 function obterSituacao(tarefa) {
@@ -55,6 +91,13 @@ function obterSituacao(tarefa) {
     };
 }
 
+// Tarefas com prazo mais próximo primeiro; sem prazo vão para o fim.
+function compararPorPrazo(a, b) {
+    const prazoA = lerPrazo(a.prazo)?.getTime() ?? Infinity;
+    const prazoB = lerPrazo(b.prazo)?.getTime() ?? Infinity;
+    return prazoA - prazoB;
+}
+
 export default function Tarefas() {
     const [tarefas, setTarefas] = useState([]);
     const [carregando, setCarregando] = useState(true);
@@ -68,7 +111,7 @@ export default function Tarefas() {
             setMensagem("");
 
             const dados = await listarTarefas();
-            setTarefas(dados);
+            setTarefas(normalizarLista(dados, ["tarefas"]));
         } catch (error) {
             setMensagem(
                 error.message || "Não foi possível carregar suas tarefas."
@@ -106,29 +149,24 @@ export default function Tarefas() {
     }
 
     const tarefasFiltradas = tarefas.filter((tarefa) => {
-        if (filtro === "concluidas") {
-            return tarefa.status === "concluida";
-        }
-
-        if (filtro === "atrasadas") {
-            return estaAtrasada(tarefa);
-        }
-
+        if (filtro === "concluidas") return tarefa.status === "concluida";
+        if (filtro === "atrasadas") return estaAtrasada(tarefa);
         if (filtro === "pendentes") {
             return tarefa.status !== "concluida" && !estaAtrasada(tarefa);
         }
-
         return true;
     });
 
+    // Agrupa por sala, ordena as salas por nome e as tarefas por prazo.
     const grupos = Object.values(
         tarefasFiltradas.reduce((resultado, tarefa) => {
-            const chave = String(tarefa.sala_id);
+            const idSala = obterIdSala(tarefa);
+            const chave = String(idSala ?? "sem-sala");
 
             if (!resultado[chave]) {
                 resultado[chave] = {
-                    id: tarefa.sala_id,
-                    nome: tarefa.sala.nome,
+                    id: chave,
+                    nome: obterNomeSala(tarefa),
                     tarefas: [],
                 };
             }
@@ -136,7 +174,12 @@ export default function Tarefas() {
             resultado[chave].tarefas.push(tarefa);
             return resultado;
         }, {})
-    );
+    )
+        .map((grupo) => ({
+            ...grupo,
+            tarefas: [...grupo.tarefas].sort(compararPorPrazo),
+        }))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 
     const totalConcluidas = tarefas.filter(
         (tarefa) => tarefa.status === "concluida"
@@ -145,8 +188,7 @@ export default function Tarefas() {
     const totalAtrasadas = tarefas.filter(estaAtrasada).length;
 
     const totalPendentes = tarefas.filter(
-        (tarefa) =>
-            tarefa.status !== "concluida" && !estaAtrasada(tarefa)
+        (tarefa) => tarefa.status !== "concluida" && !estaAtrasada(tarefa)
     ).length;
 
     return (
@@ -170,6 +212,7 @@ export default function Tarefas() {
                         </div>
 
                         <button
+                            type="button"
                             onClick={carregarTarefas}
                             disabled={carregando}
                             className="rounded-xl border border-gray-700 px-4 py-3 text-sm transition hover:bg-gray-800 disabled:opacity-50"
@@ -183,6 +226,7 @@ export default function Tarefas() {
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
                         <span>{mensagem}</span>
                         <button
+                            type="button"
                             onClick={carregarTarefas}
                             className="underline"
                         >
@@ -216,9 +260,7 @@ export default function Tarefas() {
 
                 <section>
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                        <h2 className="text-xl font-bold">
-                            Tarefas por sala
-                        </h2>
+                        <h2 className="text-xl font-bold">Tarefas por sala</h2>
 
                         <select
                             value={filtro}
@@ -233,12 +275,9 @@ export default function Tarefas() {
                     </div>
 
                     {carregando ? (
-                        <p className="text-gray-400">
-                            Carregando suas tarefas...
-                        </p>
+                        <p className="text-gray-400">Carregando suas tarefas...</p>
                     ) : tarefasFiltradas.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-gray-700 p-12 text-center">
-                        
                             <h3 className="text-lg font-semibold">
                                 Nenhuma tarefa encontrada
                             </h3>
@@ -267,9 +306,7 @@ export default function Tarefas() {
 
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                                         {grupo.tarefas.map((tarefa) => {
-                                            const situacao =
-                                                obterSituacao(tarefa);
-
+                                            const situacao = obterSituacao(tarefa);
                                             const concluida =
                                                 tarefa.status === "concluida";
 
@@ -285,19 +322,12 @@ export default function Tarefas() {
                                                             {situacao.texto}
                                                         </span>
 
-                                                        <span className="text-xs text-gray-500">
-                                                            #{tarefa.id}
-                                                        </span>
                                                     </div>
 
-                                                    <h4 className="text-lg font-semibold">
+                                                    <h4 className="break-words text-lg font-semibold">
                                                         {tarefa.titulo}
                                                     </h4>
 
-                                                    <p className="mt-2 min-h-10 flex-1 whitespace-pre-wrap break-words text-sm text-gray-400">
-                                                        {tarefa.descricao ||
-                                                            "Sem descrição."}
-                                                    </p>
 
                                                     <div className="mt-5 border-t border-gray-800 pt-4">
                                                         <p className="text-xs text-gray-500">
@@ -311,14 +341,13 @@ export default function Tarefas() {
                                                             Prazo
                                                         </p>
                                                         <p
-                                                            className={`mt-1 text-sm ${estaAtrasada(tarefa)
+                                                            className={`mt-1 text-sm ${
+                                                                estaAtrasada(tarefa)
                                                                     ? "text-red-300"
                                                                     : "text-gray-300"
-                                                                }`}
+                                                            }`}
                                                         >
-                                                            {formatarPrazo(
-                                                                tarefa.prazo
-                                                            )}
+                                                            {formatarPrazo(tarefa.prazo)}
                                                         </p>
                                                     </div>
 
@@ -328,6 +357,7 @@ export default function Tarefas() {
                                                         </div>
                                                     ) : (
                                                         <button
+                                                            type="button"
                                                             onClick={() =>
                                                                 handleConcluir(tarefa)
                                                             }
@@ -337,8 +367,7 @@ export default function Tarefas() {
                                                             }
                                                             className="mt-5 rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                                                         >
-                                                            {processandoId ===
-                                                                tarefa.id
+                                                            {processandoId === tarefa.id
                                                                 ? "Salvando..."
                                                                 : "✓ Marcar como pronta"}
                                                         </button>
