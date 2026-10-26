@@ -19,6 +19,97 @@ function validarCorpo(body) {
     return body && typeof body === "object" && !Array.isArray(body) ? body : {};
 }
 
+export async function atualizarCadastro(req, res, next) {
+    try {
+        const { nome, email } = req.body;
+        const usuarioId = req.usuario.id;
+
+        if (!nome?.trim() || !email?.trim()) {
+            return res.status(400).json({
+                mensagem: "Nome e e-mail são obrigatórios."
+            });
+        }
+
+        const { data, error } = await supabase
+            .from("usuario")
+            .update({
+                nome: nome.trim(),
+                email: email.trim()
+            })
+            .eq("id", usuarioId)
+            .select("id, nome, email")
+            .single();
+
+        if (error) {
+            return res.status(400).json({
+                mensagem: "Não foi possível atualizar o cadastro."
+            });
+        }
+
+        return res.status(200).json({
+            mensagem: "Cadastro atualizado com sucesso.",
+            usuario: data
+        });
+    } catch (erro) {
+        next(erro);
+    }
+}
+
+export async function alterarSenhaUsuario(req, res, next) {
+    try {
+        const { senhaAtual, novaSenha } = req.body;
+        const usuarioId = req.usuario.id;
+
+        if (!senhaAtual || !novaSenha || novaSenha.length < 8) {
+            return res.status(400).json({
+                mensagem: "Informe a senha atual e uma nova senha com pelo menos 8 caracteres."
+            });
+        }
+
+        const { data: usuario, error } = await supabase
+            .from("usuario")
+            .select("id, senha")
+            .eq("id", usuarioId)
+            .single();
+
+        if (error || !usuario) {
+            return res.status(404).json({
+                mensagem: "Usuário não encontrado."
+            });
+        }
+
+        const senhaValida = await bcrypt.compare(
+            senhaAtual,
+            usuario.senha
+        );
+
+        if (!senhaValida) {
+            return res.status(401).json({
+                mensagem: "A senha atual está incorreta."
+            });
+        }
+
+        const senhaHash = await bcrypt.hash(novaSenha, 10);
+
+        const { error: erroAtualizacao } = await supabase
+            .from("usuario")
+            .update({ senha: senhaHash })
+            .eq("id", usuarioId);
+
+        if (erroAtualizacao) {
+            return res.status(500).json({
+                mensagem: "Não foi possível atualizar a senha."
+            });
+        }
+
+        return res.status(200).json({
+            mensagem: "Senha alterada com sucesso."
+        });
+    } catch (erro) {
+        next(erro);
+    }
+}
+
 export async function cadastrarUsuario(req, res) {
     try {
         const corpo = validarCorpo(req.body);

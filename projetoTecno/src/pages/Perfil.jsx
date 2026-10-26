@@ -1,10 +1,11 @@
 
-import { useState } from "react";
 import Sidebar from "../components/Sidebar";
-
+import { useEffect, useState } from "react";
+import { obterPerfil, atualizarCadastro, alterarSenhaUsuario, excluirConta } from "../api/cadlog.js";
+import { lerSessao } from "../server/supabase.js";
+import { useNavigate } from "react-router-dom";
 export default function Perfil() {
-    const [nome, setNome] = useState("");
-    const [email, setEmail] = useState("");
+    const navigate = useNavigate();
     const [senhaAtual, setSenhaAtual] = useState("");
     const [novaSenha, setNovaSenha] = useState("");
     const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -14,13 +15,47 @@ export default function Perfil() {
     const [confirmacao, setConfirmacao] = useState("");
     const [mensagem, setMensagem] = useState("");
 
-    function salvarPerfil(e) {
+    const [usuario, setUsuario] = useState({
+        nome: "",
+        email: "",
+    });
+    const [carregando, setCarregando] = useState(true);
+
+
+    async function salvarPerfil(e) {
         e.preventDefault();
-        setMensagem("Dados validados! Conecte o perfil ao banco para salvar as alterações.");
+        setMensagem("");
+
+        try {
+            const sessao = lerSessao();
+
+            if (!sessao?.token) {
+                setMensagem("Você precisa fazer login novamente.");
+                return;
+            }
+
+            const resposta = await atualizarCadastro(sessao.token, {
+                nome: usuario.nome.trim(),
+                email: usuario.email.trim()
+            });
+
+            const dados = resposta.usuario ?? resposta;
+
+            setUsuario({
+                nome: dados.nome ?? usuario.nome,
+                email: dados.email ?? usuario.email
+            });
+
+            setMensagem("Perfil salvo com sucesso!");
+        } catch (erro) {
+            setMensagem(erro.message || "Erro ao salvar perfil.");
+        }
     }
 
-    function alterarSenha(e) {
+
+    async function alterarSenha(e) {
         e.preventDefault();
+        setMensagem("");
 
         if (novaSenha.length < 8) {
             setMensagem("A nova senha deve ter pelo menos 8 caracteres.");
@@ -32,20 +67,92 @@ export default function Perfil() {
             return;
         }
 
-        setMensagem("Senha validada! Conecte a autenticação para efetivar a alteração.");
-        setSenhaAtual("");
-        setNovaSenha("");
-        setConfirmarSenha("");
+        try {
+            const sessao = lerSessao();
+
+            if (!sessao?.token) {
+                setMensagem("Você precisa fazer login novamente.");
+                return;
+            }
+
+            await alterarSenhaUsuario(sessao.token, {
+                senhaAtual,
+                novaSenha
+            });
+
+            setMensagem("Senha alterada com sucesso!");
+
+            setSenhaAtual("");
+            setNovaSenha("");
+            setConfirmarSenha("");
+        } catch (erro) {
+            setMensagem(erro.message || "Erro ao alterar senha.");
+        }
     }
 
-    function excluirPerfil() {
-        if (confirmacao !== "EXCLUIR") {
-            setMensagem('Digite EXCLUIR para confirmar a intenção.');
+
+
+    async function excluirPerfil() {
+        if (confirmacao.trim() !== "EXCLUIR") {
+            setMensagem('Digite EXCLUIR para confirmar a exclusão.');
             return;
         }
 
-        setMensagem("A exclusão real precisa ser conectada à autenticação e ao banco de dados.");
+        const sessao = lerSessao();
+
+        if (!sessao?.token) {
+            setMensagem("Sua sessão expirou. Faça login novamente.");
+            return;
+        }
+
+        const confirmou = window.confirm(
+            "Tem certeza de que deseja excluir sua conta? Essa ação não poderá ser desfeita."
+        );
+
+        if (!confirmou) {
+            return;
+        }
+
+        try {
+            setMensagem("");
+
+            await excluirConta(sessao.token);
+
+            navigate("/Inicio", { replace: true });
+        } catch (erro) {
+            setMensagem(
+                erro.message || "Não foi possível excluir sua conta."
+            );
+        }
     }
+
+
+    useEffect(() => {
+        async function carregarPerfil() {
+            try {
+                const sessao = lerSessao();
+
+                if (!sessao?.token) {
+                    setMensagem("Você precisa fazer login.");
+                    return;
+                }
+
+                const resposta = await obterPerfil(sessao.token);
+                const dados = resposta.usuario ?? resposta;
+
+                setUsuario({
+                    nome: dados.nome ?? "",
+                    email: dados.email ?? "",
+                });
+            } catch (erro) {
+                setMensagem(erro.message || "Erro ao carregar perfil.");
+            } finally {
+                setCarregando(false);
+            }
+        }
+
+        carregarPerfil();
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#0B0F1A] text-white">
@@ -71,16 +178,16 @@ export default function Perfil() {
 
                     <section className="bg-[#111827] border border-gray-800 rounded-2xl p-6 mb-6 flex items-center gap-5">
                         <div className="w-16 h-16 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-2xl font-bold text-blue-400">
-                            {nome.trim() ? nome.trim().charAt(0).toUpperCase() : "U"}
+                            {usuario.nome.trim() ? usuario.nome.trim().charAt(0).toUpperCase() : "U"}
                         </div>
 
                         <div>
                             <h2 className="text-xl font-semibold">
-                                {nome.trim() || "Seu nome"}
+                                {usuario.nome.trim() || "Seu nome"}
                             </h2>
 
                             <p className="text-gray-400 text-sm mt-1">
-                                {email || "Seu e-mail"}
+                                {usuario.email || "Seu e-mail"}
                             </p>
                         </div>
                     </section>
@@ -114,11 +221,10 @@ export default function Perfil() {
                                     id="nome"
                                     type="text"
                                     autoComplete="name"
-                                    value={nome}
-                                    onChange={(e) => {
-                                        setNome(e.target.value);
-                                        setMensagem("");
-                                    }}
+                                    value={usuario.nome}
+                                    onChange={(e) =>
+                                        setUsuario({ ...usuario, nome: e.target.value })
+                                    }
                                     placeholder="Digite seu nome"
                                     required
                                     className="w-full bg-[#0B0F1A] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition"
@@ -134,11 +240,10 @@ export default function Perfil() {
                                     id="email"
                                     type="email"
                                     autoComplete="email"
-                                    value={email}
-                                    onChange={(e) => {
-                                        setEmail(e.target.value);
-                                        setMensagem("");
-                                    }}
+                                    value={usuario.email}
+                                    onChange={(e) =>
+                                        setUsuario({ ...usuario, email: e.target.value })
+                                    }
                                     placeholder="seu@email.com"
                                     required
                                     className="w-full bg-[#0B0F1A] border border-gray-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition"

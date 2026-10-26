@@ -23,6 +23,30 @@ export async function excluirConta(token) {
     return resposta;
 }
 
+export async function atualizarCadastro(token, { nome, email, senha }) {
+    const resposta = await requestAPI("/api/auth/conta", {
+        metodo: "PUT",
+        token,
+        corpo: { nome, email, senha }
+    });
+
+    salvarSessao({ token: resposta.token ?? token, usuario: resposta.usuario });
+    return resposta;
+}
+
+
+export async function alterarSenhaUsuario(token, { senhaAtual, novaSenha }) {
+    return requestAPI("/api/auth/alterar-senha", {
+        metodo: "PUT",
+        token,
+        corpo: {
+            senhaAtual,
+            novaSenha
+        }
+    });
+}
+
+
 export function encerrarSessao() {
     limparSessao();
 }
